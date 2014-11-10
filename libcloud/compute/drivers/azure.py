@@ -418,7 +418,6 @@ class AzureNodeDriver(NodeDriver):
         """
         data = self._perform_get(
             '/' + self.subscription_id + '/services/networking/virtualnetwork', VirtualNetworkSites)
-
         return [self._to_network(l) for l in data]
 
     def list_nodes(self, ex_cloud_service_name=None):
@@ -691,6 +690,16 @@ class AzureNodeDriver(NodeDriver):
         name = re.sub(ur'[\W_]+', u'', name.lower(), flags=re.UNICODE)
         #sanitize name
 
+        #Optionally specify the name of an existing virtual network to which the deployment will belong.
+        virtual_network_name = kwargs.get('virtual_network_name', None)
+        if virtual_network_name:
+            networks = self.ex_list_networks()
+            for net in networks:
+                if net.id == virtual_network_name:
+                    #set location as the location of the network
+                    location = net.extra.get('location')
+                    break
+
         if not ex_cloud_service_name:
             try:
                 self.create_cloud_service(name, location=location)
@@ -821,8 +830,6 @@ class AzureNodeDriver(NodeDriver):
         media_link = blob_url + "/vhds/" + disk_name
         disk_config = OSVirtualHardDisk(image, media_link)
 
-        #Optionally specify the name of an existing virtual network to which the deployment will belong.
-        virtual_network_name = kwargs.get('virtual_network_name', None)
 
         # OK, bit annoying here. You must create a deployment before
         # you can create an instance; however, the deployment function
@@ -1133,12 +1140,13 @@ class AzureNodeDriver(NodeDriver):
         for subnet in data.subnets:
             cidr.append(subnet.address_prefix)
         cidr = ','.join(cidr)
-
+        extra = {}
+        extra['location'] = data.location
         return AzureNetwork(
             id=data.name,
             name=data.name,
             cidr=cidr,
-            extra=cidr,
+            extra=extra,
             driver=self.connection.driver)
 
     def _to_node_size(self, data):
@@ -2575,6 +2583,7 @@ class VirtualNetworkSite(WindowsAzureData):
         self.id = u''
         self.affinity_group = u''
         self.subnets = Subnets()
+        self.location = u''
 
 
 class Subnets(WindowsAzureData):
