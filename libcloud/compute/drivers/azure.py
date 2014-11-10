@@ -411,6 +411,16 @@ class AzureNodeDriver(NodeDriver):
 
         return [self._to_location(l) for l in data]
 
+    def ex_list_networks(self):
+        """
+        Lists Virtual Networks
+
+        """
+        data = self._perform_get(
+            '/' + self.subscription_id + '/services/networking/virtualnetwork', VirtualNetworkSites)
+
+        return [self._to_network(l) for l in data]
+
     def list_nodes(self, ex_cloud_service_name=None):
         """
         List nodes for a cloud service, or for all cloud services
@@ -811,7 +821,8 @@ class AzureNodeDriver(NodeDriver):
         media_link = blob_url + "/vhds/" + disk_name
         disk_config = OSVirtualHardDisk(image, media_link)
 
-
+        #Optionally specify the name of an existing virtual network to which the deployment will belong.
+        virtual_network_name = kwargs.get('virtual_network_name', None)
 
         # OK, bit annoying here. You must create a deployment before
         # you can create an instance; however, the deployment function
@@ -835,7 +846,7 @@ class AzureNodeDriver(NodeDriver):
                     None,
                     None,
                     size,
-                    None))
+                    virtual_network_name))
         else:
             _deployment_name = self._get_deployment(
                 service_name=ex_cloud_service_name,
@@ -1113,6 +1124,22 @@ class AzureNodeDriver(NodeDriver):
             driver=self.connection.driver,
             available_services=data.available_services,
             virtual_machine_role_sizes=(data.compute_capabilities).virtual_machines_role_sizes)
+
+    def _to_network(self, data):
+        """
+        Convert the data from a Azure resonse object into a network
+        """
+        cidr = []
+        for subnet in data.subnets:
+            cidr.append(subnet.address_prefix)
+        cidr = ','.join(cidr)
+
+        return AzureNetwork(
+            id=data.id,
+            name=data.name,
+            cidr=cidr,
+            extra=cidr,
+            driver=self.connection.driver)
 
     def _to_node_size(self, data):
         """
@@ -2526,6 +2553,52 @@ class Location(WindowsAzureData):
         self.compute_capabilities = ComputeCapability()
 
 
+class VirtualNetworkSites(WindowsAzureData):
+
+    def __init__(self):
+        self.virtual_network_sites = _list_of(VirtualNetworkSite)
+
+    def __iter__(self):
+        return iter(self.virtual_network_sites)
+
+    def __len__(self):
+        return len(self.virtual_network_sites)
+
+    def __getitem__(self, index):
+        return self.virtual_network_sites[index]
+
+
+class VirtualNetworkSite(WindowsAzureData):
+
+    def __init__(self):
+        self.name = u''
+        self.id = u''
+        self.affinity_group = u''
+        self.subnets = Subnets()
+
+
+class Subnets(WindowsAzureData):
+
+    def __init__(self):
+        self.subnets = _list_of(Subnet)
+
+    def __iter__(self):
+        return iter(self.subnets)
+
+    def __len__(self):
+        return len(self.subnets)
+
+    def __getitem__(self, index):
+        return self.subnets[index]
+
+
+class Subnet(WindowsAzureData):
+
+    def __init__(self):
+        self.name = u''
+        self.address_prefix = u''
+
+
 class ComputeCapability(WindowsAzureData):
 
     def __init__(self):
@@ -3011,3 +3084,19 @@ class AzureNodeLocation(NodeLocation):
                 % (self.id, self.name, self.country,
                    self.driver.name, ','.join(self.available_services),
                    ','.join(self.virtual_machine_role_sizes)))
+
+
+class AzureNetwork(object):
+    """
+    A Virtual Network.
+    """
+
+    def __init__(self, id, name, cidr, driver, extra=None):
+        self.id = str(id)
+        self.name = name
+        self.cidr = cidr
+        self.driver = driver
+        self.extra = extra or {}
+
+    def __repr__(self):
+        return '<VirtualNetwork id="%s" name="%s" cidr="%s">' % (self.id, self.name, self.cidr)
