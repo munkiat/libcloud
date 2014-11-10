@@ -1135,7 +1135,7 @@ class AzureNodeDriver(NodeDriver):
         cidr = ','.join(cidr)
 
         return AzureNetwork(
-            id=data.id,
+            id=data.name,
             name=data.name,
             cidr=cidr,
             extra=cidr,
