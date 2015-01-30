@@ -350,9 +350,20 @@ class DigitalOceanNodeDriver(NodeDriver):
         params['private_networking'] = private_networking
         headers = {'Content-type': 'application/json'}
 
-        data = self.connection.request('/droplets', data=json.dumps(params),
-                                       method='POST',
-                                       headers=headers).object['droplet']
+        try:
+            data = self.connection.request('/droplets', data=json.dumps(params),
+                                           method='POST',
+                                           headers=headers).object['droplet']
+        except Exception as exc:
+            message = exc.message.get('message','')
+            # if private networking not allowed for this location, then try without it
+            if message.startswith('Private networking is not supported for this configuration, please try a different region or distribution.'):
+                params['private_networking'] = False
+                data = self.connection.request('/droplets', data=json.dumps(params),
+                                           method='POST',
+                                           headers=headers).object['droplet']
+            else:
+                raise Exception(message)
         if data.get('status') == 'ERROR':
             raise Exception(data.get('message'))
 
