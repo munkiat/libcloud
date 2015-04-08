@@ -460,24 +460,16 @@ class VSphereNodeDriver(NodeDriver):
 
     def _to_nodes(self, vm_paths):
         # use multiprocessing to query vm_paths on parallel
-        # since libcloud driver instance is not thread safe, the easiest solution is
-        # to create a new driver instance inside each thread.
-        # http://ci.apache.org/projects/libcloud/docs/other/using-libcloud-in-multithreaded-and-async-environments.html
-
         def _list_one(vm_path):
-            driver = get_driver(self.type)(host=self.connection.host_or_url, username=self.key,
-                                password=self.secret)
             try:
-                result = driver.connection.client.get_vm_by_path(vm_path)
+                result = self.connection.client.get_vm_by_path(vm_path)
                 node = self._to_node(vm=result)
-                driver.connection.disconnect()
                 return node
             except:
                 return None
         pool = multiprocessing.pool.ThreadPool(8)
         results = pool.map(_list_one, vm_paths)
         pool.terminate()
-        nodes = []
         nodes = [result for result in results if result]
         return nodes
 
