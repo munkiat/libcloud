@@ -26,6 +26,7 @@ import base64
 import os
 import binascii
 import multiprocessing.pool
+import ssl
 
 from libcloud.utils.py3 import urlquote as url_quote
 from libcloud.utils.py3 import urlunquote as url_unquote
@@ -34,7 +35,7 @@ from libcloud.compute.providers import Provider, get_driver
 from libcloud.compute.base import Node, NodeDriver, NodeLocation, NodeSize
 from libcloud.compute.base import NodeImage, StorageVolume
 from libcloud.compute.base import KeyPair
-from libcloud.compute.types import NodeState
+from libcloud.compute.types import NodeState, InvalidCredsError
 from libcloud.common.types import LibcloudError
 from datetime import datetime
 from xml.dom import minidom
@@ -1308,7 +1309,7 @@ class AzureNodeDriver(NodeDriver):
         #In these cases try again as fallback
         for i in range(3):
             response = self._perform_request(request)
-            if response.body != '':
+            if response and response.body != '':
                 break
         if response_type is not None:
             return self._parse_response(response, response_type)
@@ -1359,8 +1360,8 @@ class AzureNodeDriver(NodeDriver):
                             data=request.body, headers=request.headers,
                             method=request.method)
             return response
-        except Exception as e:
-            print e
+        except ssl.SSLError:
+            raise InvalidCredsError('Invalid certificate file')
 
     def _update_request_uri_query(self, request):
         '''pulls the query string out of the URI and moves it into

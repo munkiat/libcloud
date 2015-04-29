@@ -65,9 +65,14 @@ class AzureResponse(XmlResponse):
             if type(body) == ET.Element:
                 code = body.findtext(fixxpath(xpath='Code'))
                 message = body.findtext(fixxpath(xpath='Message'))
-                message = message.split('\n')[0]
-                error_msg = '%s: %s' % (code, message)
-
+                if message:
+                    message = message.split('\n')[0]
+                if code and message:
+                    error_msg = '%s: %s' % (code, message)
+                elif code:
+                    error_msg = str(code)
+                elif message:
+                    error_msg = str(message)
         except MalformedResponseError:
             pass
 
@@ -244,8 +249,3 @@ class AzureServiceManagementConnection(CertificateConnection):
         headers['x-ms-date'] = time.strftime(AZURE_TIME_FORMAT, time.gmtime())
         #headers['host'] = self.host
         return headers
-
-
-
-
-
