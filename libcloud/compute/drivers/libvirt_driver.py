@@ -189,11 +189,10 @@ class LibvirtNodeDriver(NodeDriver):
             # avoid duplicate insertion in public ips
             public_ips.append(public_ip)
 
-
         extra = {'uuid': domain.UUIDString(), 'os_type': domain.OSType(),
                  'types': self.connection.getType(),
                  'hypervisor_name': self.connection.getHostname(),
-                 'used_memory': memory / 1024, 'vcpu_count': vcpu_count,
+                 'Memory': '%s MB' % str(memory / 1024), 'Processors': vcpu_count,
                  'used_cpu_time': used_cpu_time}
 
         node = Node(id=domain.UUIDString(), name=domain.name(), state=state,
@@ -241,6 +240,40 @@ class LibvirtNodeDriver(NodeDriver):
             result.append(mac_address)
 
         return result
+
+    def _get_vnc_port_for_domain(self, node):
+        """
+        Returns the vnc port for a domain
+        """
+        cmd = "virsh vncdisplay %s" % node.name
+        output = ''
+        # ssh and run the command if on remote hypervisor
+        if self.secret:
+            try:
+                import paramiko
+                ssh=paramiko.SSHClient()
+                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                ssh.connect(self.host, username=self.key, key_filename=self.secret,
+                            timeout=None, allow_agent=False, look_for_keys=False)
+                stdin,stdout,stderr = ssh.exec_command(cmd)
+                output = stdout.read()
+                ssh.close()
+            except:
+                pass
+        else:
+            child = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+            output = stdout
+
+        try:
+            port = output.split(":")[1]
+            port = port.replace('\n', '')
+            vnc_port = int(port) + 5900
+        except:
+            vnc_port = 5900
+
+        return vnc_port
 
     def list_sizes(self):
         return []
