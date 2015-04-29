@@ -262,8 +262,9 @@ class LibvirtNodeDriver(NodeDriver):
             except:
                 pass
         else:
-            child = subprocess.Popen(cmd, stdout=subprocess.PIPE,
+            child = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
+            stdout, _ = child.communicate()
             output = stdout
 
         try:
