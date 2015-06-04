@@ -301,7 +301,7 @@ class DockerNodeDriver(NodeDriver):
                     volumes=None, volumes_from=None,
                     network_disabled=False, entrypoint=None,
                     cpu_shares=None, working_dir='', domainname=None,
-                    memswap_limit=0, port_bindings={}):
+                    memswap_limit=0, port_bindings={}, volume_bindings=[]):
         """
         Create a container
 
@@ -340,6 +340,7 @@ class DockerNodeDriver(NodeDriver):
             'MemorySwap': memswap_limit,
             'PublishAllPorts': True,
             'PortBindings': port_bindings,
+            'Binds': volume_bindings
         }
 
         data = json.dumps(payload)
@@ -362,7 +363,7 @@ class DockerNodeDriver(NodeDriver):
         id_ = result.object['Id']
 
         payload = {
-            'Binds': [],
+            'Binds': volume_bindings,
             'PublishAllPorts': True,
             'PortBindings': port_bindings,
         }
