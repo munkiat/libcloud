@@ -55,13 +55,16 @@ class DockerResponse(JsonResponse):
             # error responses are tricky in Docker. Eg response could be
             # an error, but response status could still be 200
             body = json.loads(self.body)
-        except ValueError:
-            m = re.search('Error: (.+?)"', self.body)
-            if m:
-                error_msg = m.group(1)
-                raise Exception(error_msg)
+        except ValueError as exc:
+            if "Extra data" in str(exc):
+                return self.body
             else:
-                raise Exception('ConnectionError: Failed to parse JSON response')
+                m = re.search('Error: (.+?)"', self.body)
+                if m:
+                    error_msg = m.group(1)
+                    raise Exception(error_msg)
+                else:
+                    raise Exception('ConnectionError: Failed to parse JSON response')
         return body
 
     def parse_error(self):
