@@ -1394,9 +1394,9 @@ class AzureNodeDriver(NodeDriver):
                             action=response.headers.get('location'),
                             data=request.body, headers=request.headers,
                             method=request.method)
-            return response
         except Exception as e:
-            print e
+            raise Exception(e)
+        return response
 
     def _update_request_uri_query(self, request):
         '''pulls the query string out of the URI and moves it into
