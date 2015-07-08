@@ -19,6 +19,7 @@ Created by Markos Gogoulos (mgogoulos@mist.io)
 """
 
 import base64
+import socket
 import datetime
 import shlex
 import re
@@ -117,7 +118,7 @@ class DockerNodeDriver(NodeDriver):
     features = {'create_node': ['password']}
 
     def __init__(self, key=None, secret=None, host='localhost',
-                 port=4243, secure=False, key_file=None, cert_file=None):
+                 port=4243, secure=False, key_file=None, cert_file=None, show_host=True):
 
         super(DockerNodeDriver, self).__init__(key=key, secret=secret,
                                                host=host, port=port, secure=secure, key_file=key_file, cert_file=cert_file)
@@ -144,7 +145,7 @@ class DockerNodeDriver(NodeDriver):
 
         self.connection.host = host
         self.connection.port = port
-
+        self.show_host = show_host
 
 
     def _get_api_version(self):
@@ -183,6 +184,19 @@ class DockerNodeDriver(NodeDriver):
             raise
 
         nodes = [self._to_node(value) for value in result]
+
+        if self.show_host:
+            # append docker host as well
+            try:
+                public_ip = socket.gethostbyname(self.connection.host)
+            except:
+                public_ip = self.connection.host
+
+            extra = {'tags': {'type': 'docker_host'}}
+            node = Node(id=public_ip, name=public_ip, state=0,
+                    public_ips=[public_ip], private_ips=[], driver=self,
+                    extra=extra)
+            nodes.append(node)
         return nodes
 
     def inspect_node(self, node):
