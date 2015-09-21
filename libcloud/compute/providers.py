@@ -27,10 +27,14 @@ __all__ = [
     "get_driver"]
 
 DRIVERS = {
+    Provider.AZURE:
+    ('libcloud.compute.drivers.azure', 'AzureNodeDriver'),
     Provider.DUMMY:
     ('libcloud.compute.drivers.dummy', 'DummyNodeDriver'),
     Provider.EC2_US_EAST:
     ('libcloud.compute.drivers.ec2', 'EC2NodeDriver'),
+    Provider.EC2_EU_CENTRAL:
+    ('libcloud.compute.drivers.ec2', 'EC2EUCentralNodeDriver'),
     Provider.EC2_EU_WEST:
     ('libcloud.compute.drivers.ec2', 'EC2EUNodeDriver'),
     Provider.EC2_US_WEST:
@@ -111,12 +115,16 @@ DRIVERS = {
     ('libcloud.compute.drivers.gandi', 'GandiNodeDriver'),
     Provider.OPSOURCE:
     ('libcloud.compute.drivers.opsource', 'OpsourceNodeDriver'),
+    Provider.DIMENSIONDATA:
+    ('libcloud.compute.drivers.dimensiondata', 'DimensionDataNodeDriver'),
     Provider.OPENSTACK:
     ('libcloud.compute.drivers.openstack', 'OpenStackNodeDriver'),
     Provider.NINEFOLD:
     ('libcloud.compute.drivers.ninefold', 'NinefoldNodeDriver'),
     Provider.VCLOUD:
     ('libcloud.compute.drivers.vcloud', 'VCloudNodeDriver'),
+    Provider.INDONESIAN_VCLOUD:
+    ('libcloud.compute.drivers.indonesian_vcloud', 'IndonesianVCloudNodeDriver'),
     Provider.TERREMARK:
     ('libcloud.compute.drivers.vcloud', 'TerremarkDriver'),
     Provider.CLOUDSTACK:
@@ -135,6 +143,8 @@ DRIVERS = {
     ('libcloud.compute.drivers.abiquo', 'AbiquoNodeDriver'),
     Provider.DIGITAL_OCEAN:
     ('libcloud.compute.drivers.digitalocean', 'DigitalOceanNodeDriver'),
+    Provider.DIGITAL_OCEAN_FIRST_GEN:
+    ('libcloud.compute.drivers.digitalocean', 'DigitalOceanFirstGenNodeDriver'),
     Provider.NEPHOSCALE:
     ('libcloud.compute.drivers.nephoscale', 'NephoscaleNodeDriver'),
     Provider.CLOUDFRAMES:
@@ -143,6 +153,8 @@ DRIVERS = {
     ('libcloud.compute.drivers.exoscale', 'ExoscaleNodeDriver'),
     Provider.IKOULA:
     ('libcloud.compute.drivers.ikoula', 'IkoulaNodeDriver'),
+    Provider.DOCKER:
+    ('libcloud.compute.drivers.docker', 'DockerNodeDriver'),
     Provider.OUTSCALE_SAS:
     ('libcloud.compute.drivers.ec2', 'OutscaleSASNodeDriver'),
     Provider.OUTSCALE_INC:
